@@ -1,6 +1,7 @@
 package com.isaev.dummyjson
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -15,13 +16,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -49,7 +54,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
 
-                    ProductList(products)
+                    ProductList(products) {
+                        viewModel.getMoreProducts()
+                    }
                 }
             }
         }
@@ -57,10 +64,26 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ProductList(products: State<List<Product>>) {
-    LazyColumn() {
+fun ProductList(products: State<List<Product>>, getMoreProducts: () -> Unit) {
+
+    val listState = rememberLazyListState()
+
+    val firstItemIndexState = remember { derivedStateOf { listState.firstVisibleItemIndex } }
+
+    LazyColumn(state = listState) {
         items(products.value) {
             ProductItem(product = it)
+        }
+    }
+
+    LaunchedEffect(firstItemIndexState.value) {
+
+        if (firstItemIndexState.value >= products.value.size - 10) {
+            Log.i(
+                "TAG",
+                "firstItemIndex = ${firstItemIndexState.value}, products.size = ${products.value.size}"
+            )
+            getMoreProducts()
         }
     }
 }

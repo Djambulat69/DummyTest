@@ -15,8 +15,8 @@ object DummyJsonServiceHelper {
         json.asConverterFactory("application/json".toMediaType())
     ).build().create(DummyJsonService::class.java)
 
-    suspend fun getProducts(): List<Product> {
-        val response = service.getProducts(skip = 0, limit = 40)
+    suspend fun getProducts(skip: Int = 0): List<Product> {
+        val response = service.getProducts(skip, limit = 20)
 
         return response.products
     }

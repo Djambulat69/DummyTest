@@ -13,11 +13,20 @@ class MainViewModel : ViewModel() {
     private val _products = MutableLiveData<List<Product>>()
     private val network = DummyJsonServiceHelper
 
+    private var loadingProducts = false
+
     val products: LiveData<List<Product>> = _products
 
-    init {
+    fun getMoreProducts() {
+        if (loadingProducts) return
+
         viewModelScope.launch {
-            _products.value = network.getProducts()
+            loadingProducts = true
+
+            _products.value =
+                _products.value.orEmpty() + network.getProducts(skip = _products.value?.size ?: 0)
+
+            loadingProducts = false
         }
     }
 
