@@ -18,15 +18,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -70,21 +71,25 @@ fun ProductList(products: State<List<Product>>, getMoreProducts: () -> Unit) {
 
     val firstItemIndexState = remember { derivedStateOf { listState.firstVisibleItemIndex } }
 
-    LazyColumn(state = listState) {
+    LazyColumn(
+        state = listState,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         items(products.value) {
             ProductItem(product = it)
         }
+
+        item {
+            CircularProgressIndicator()
+        }
     }
 
-    LaunchedEffect(firstItemIndexState.value) {
-
-        if (firstItemIndexState.value >= products.value.size - 10) {
-            Log.i(
-                "TAG",
-                "firstItemIndex = ${firstItemIndexState.value}, products.size = ${products.value.size}"
-            )
-            getMoreProducts()
-        }
+    if (firstItemIndexState.value >= products.value.size - 10) {
+        Log.i(
+            "TAG",
+            "firstItemIndex = ${firstItemIndexState.value}, products.size = ${products.value.size}"
+        )
+        getMoreProducts()
     }
 }
 
@@ -96,9 +101,6 @@ fun ProductItem(product: Product) {
             .padding(2.dp)
             .wrapContentHeight()
     ) {
-
-        val imgShape = RoundedCornerShape(4.dp)
-
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current).data(product.thumbnail)
                 .crossfade(true).build(),
@@ -106,7 +108,7 @@ fun ProductItem(product: Product) {
             contentDescription = product.title,
             modifier = Modifier
                 .size(120.dp)
-                .clip(imgShape)
+                .clip(RoundedCornerShape(4.dp))
         )
         Spacer(modifier = Modifier.width(10.dp))
         Column {

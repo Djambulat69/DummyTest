@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.isaev.dummyjson.Product
-import com.isaev.dummyjson.ui.theme.network.DummyJsonServiceHelper
+import com.isaev.dummyjson.network.DummyJsonServiceHelper
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {

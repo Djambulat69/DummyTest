@@ -1,4 +1,4 @@
-package com.isaev.dummyjson.ui.theme.network
+package com.isaev.dummyjson.network
 
 import com.isaev.dummyjson.Product
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory

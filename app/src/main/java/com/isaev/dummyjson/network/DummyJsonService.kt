@@ -1,4 +1,4 @@
-package com.isaev.dummyjson.ui.theme.network
+package com.isaev.dummyjson.network
 
 import com.isaev.dummyjson.ProductsResponse
 import retrofit2.http.GET
