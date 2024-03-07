@@ -18,12 +18,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,16 +49,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val products = viewModel.products.observeAsState(initial = emptyList())
+            val productsState = viewModel.products.observeAsState(initial = emptyList())
 
             DummyJsonTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
 
-                    ProductList(products) {
-                        viewModel.getMoreProducts()
-                    }
+                    ProductList(productsState.value, viewModel)
                 }
             }
         }
@@ -65,31 +64,43 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ProductList(products: State<List<Product>>, getMoreProducts: () -> Unit) {
+fun ProductList(products: List<Product>, viewModel: MainViewModel) {
 
     val listState = rememberLazyListState()
+    val pagingState = viewModel.pagingState.observeAsState()
 
     val firstItemIndexState = remember { derivedStateOf { listState.firstVisibleItemIndex } }
 
     LazyColumn(
-        state = listState,
-        horizontalAlignment = Alignment.CenterHorizontally
+        state = listState, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        items(products.value) {
+        items(products) {
             ProductItem(product = it)
         }
 
-        item {
-            CircularProgressIndicator()
+        if (pagingState.value == DataState.LOADING) {
+            item {
+                CircularProgressIndicator()
+            }
+        } else if (pagingState.value == DataState.FAILURE) {
+            item {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(id = R.string.wrong_message)
+                    )
+                    Button(onClick = { viewModel.getMoreProducts() }) {
+                        Text(text = stringResource(id = R.string.retry))
+                    }
+                }
+            }
         }
     }
 
-    if (firstItemIndexState.value >= products.value.size - 10) {
+    if (firstItemIndexState.value >= products.size - 10 && pagingState.value == DataState.SUCCESS) {
         Log.i(
-            "TAG",
-            "firstItemIndex = ${firstItemIndexState.value}, products.size = ${products.value.size}"
+            "TAG", "firstItemIndex = ${firstItemIndexState.value}, products.size = ${products.size}"
         )
-        getMoreProducts()
+        viewModel.getMoreProducts()
     }
 }
 

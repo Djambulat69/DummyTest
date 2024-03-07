@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Dummy Json</string>
+
+    <string name="wrong_message">Something went wrong :(</string>
+    <string name="retry">Retry</string>
 </resources>
