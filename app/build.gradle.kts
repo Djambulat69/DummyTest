@@ -29,6 +29,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -72,8 +73,10 @@ dependencies {
 
     // Easy json decoding
     implementation(libs.kotlinx.serialization.json)
-    implementation (libs.retrofit2.kotlinx.serialization.converter)
+    implementation(libs.retrofit2.kotlinx.serialization.converter)
     // Easy networking
     implementation(libs.retrofit)
 
+    // Easy Images
+    implementation(libs.coil.compose)
 }

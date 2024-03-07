@@ -17,7 +17,7 @@ class MainViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-            _products.value = network.getProducts().products
+            _products.value = network.getProducts()
         }
     }
 

@@ -1,8 +1,9 @@
 package com.isaev.dummyjson.ui.theme.network
 
+import com.isaev.dummyjson.Product
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
 
 object DummyJsonServiceHelper {
@@ -11,8 +12,12 @@ object DummyJsonServiceHelper {
     private val json: Json = Json { ignoreUnknownKeys = true }
 
     private val service = Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(
-            json.asConverterFactory(MediaType.get("application/json"))
-        ).build().create(DummyJsonService::class.java)
+        json.asConverterFactory("application/json".toMediaType())
+    ).build().create(DummyJsonService::class.java)
 
-    suspend fun getProducts() = service.getProducts(skip = 0, limit = 40)
+    suspend fun getProducts(): List<Product> {
+        val response = service.getProducts(skip = 0, limit = 40)
+
+        return response.products
+    }
 }
