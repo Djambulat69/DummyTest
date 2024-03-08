@@ -1,9 +1,11 @@
 package com.isaev.dummyjson
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,11 +19,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.IntState
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +48,8 @@ import com.isaev.dummyjson.ui.theme.DummyJsonTheme
 import com.isaev.dummyjson.ui.theme.MainViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 private const val IMAGES_CHANGE_LAUNCH_KEY = 0
 
@@ -61,104 +67,111 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    ProductList(productsState.value, viewModel)
+                    Column {
+                        MainAppBar()
+                        HorizontalDivider()
+                        ProductList(productsState.value)
+                    }
                 }
             }
         }
     }
-}
 
-@Composable
-fun ProductList(products: List<Product>, viewModel: MainViewModel) {
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun MainAppBar() {
+        TopAppBar(title = { Text(text = stringResource(id = R.string.app_name)) })
+    }
 
-    val listState = rememberLazyListState()
-    val pagingState = viewModel.pagingState.observeAsState()
+    @Composable
+    fun ProductList(products: List<Product>) {
 
-    val firstItemIndexState = remember { derivedStateOf { listState.firstVisibleItemIndex } }
+        val listState = rememberLazyListState()
+        val pagingState = viewModel.pagingState.observeAsState()
 
-    val photoIndex = rememberSaveable { mutableIntStateOf(0) }
-    val MAX_IMAGES_COUNT = 10
+        val firstItemIndexState = remember { derivedStateOf { listState.firstVisibleItemIndex } }
 
-    LaunchedEffect(IMAGES_CHANGE_LAUNCH_KEY) {
-        launch {
-            while (true) {
-                delay(5000)
-                photoIndex.intValue = (photoIndex.intValue + 1) % MAX_IMAGES_COUNT
+        val photoIndex = rememberSaveable { mutableIntStateOf(0) }
+        val MAX_IMAGES_COUNT = 10
+
+        LaunchedEffect(IMAGES_CHANGE_LAUNCH_KEY) {
+            launch {
+                while (true) {
+                    delay(5000)
+                    photoIndex.intValue = (photoIndex.intValue + 1) % MAX_IMAGES_COUNT
+                }
+            }
+        }
+
+        LazyColumn(
+            state = listState, horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            items(products) {
+                ProductItem(product = it, photoIndex)
+            }
+
+            if (pagingState.value == DataState.LOADING) {
+                item {
+                    CircularProgressIndicator()
+                }
+            } else if (pagingState.value == DataState.FAILURE) {
+                item {
+                    ErrorMessage(onRetry = { viewModel.getMoreProducts() })
+                }
+            }
+        }
+
+        if (firstItemIndexState.value >= products.size - 10 && pagingState.value == DataState.SUCCESS) {
+            // Чтобы не было бесконечной загрузки в конце (Я так понял в бэкенде 100 элементов максимум)
+            if (products.size < 100) {
+                viewModel.getMoreProducts()
             }
         }
     }
 
-    LazyColumn(
-        state = listState, horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        items(products) {
-            ProductItem(product = it, photoIndex)
-        }
+    @Composable
+    fun ProductItem(product: Product, photoIndex: IntState) {
 
-        if (pagingState.value == DataState.LOADING) {
-            item {
-                CircularProgressIndicator()
-            }
-        } else if (pagingState.value == DataState.FAILURE) {
-            item {
-                ErrorMessage(onRetry = { viewModel.getMoreProducts() })
-            }
-        }
-    }
-
-    if (firstItemIndexState.value >= products.size - 10 && pagingState.value == DataState.SUCCESS) {
-        // Чтобы не было бесконечной загрузки в конце (Я так понял в бэкенде 100 элементов максимум)
-        if (products.size < 100) {
-            viewModel.getMoreProducts()
-        }
-    }
-}
-
-@Composable
-fun ProductItem(product: Product, photoIndex: IntState) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp, horizontal = 6.dp)
-            .wrapContentHeight()
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(product.images[photoIndex.intValue % product.images.size]).transitionFactory(
-                    CrossfadeTransitionFactoryFixed()
-                ).build(),
-            contentScale = ContentScale.Crop,
-            contentDescription = product.title,
+        Row(
             modifier = Modifier
-                .size(120.dp)
-                .clip(RoundedCornerShape(4.dp))
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Column {
-            Text(
-                text = product.title,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                .fillMaxWidth()
+                .padding(vertical = 2.dp, horizontal = 6.dp)
+                .wrapContentHeight()
+                .clickable {
+                    startActivity(Intent(this, ProductActivity::class.java).apply {
+                        putExtra(
+                            ProductActivity.PRODUCT_EXTRA_KEY, Json.encodeToString(product)
+                        )
+                    })
+                },
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(product.images[photoIndex.intValue % product.images.size])
+                    .transitionFactory(
+                        CrossfadeTransitionFactoryFixed()
+                    ).build(),
+                contentScale = ContentScale.Crop,
+                contentDescription = product.title,
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(RoundedCornerShape(4.dp))
             )
-            Text(
-                text = product.description,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 5,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-fun ErrorMessage(onRetry: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = stringResource(id = R.string.wrong_message)
-        )
-        Button(onClick = { onRetry() }) {
-            Text(text = stringResource(id = R.string.retry))
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(
+                    text = product.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = product.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 5,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
