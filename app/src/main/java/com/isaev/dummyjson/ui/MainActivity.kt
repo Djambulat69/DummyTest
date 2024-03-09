@@ -1,4 +1,4 @@
-package com.isaev.dummyjson
+package com.isaev.dummyjson.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -41,6 +41,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.isaev.dummyjson.DataState
+import com.isaev.dummyjson.Product
+import com.isaev.dummyjson.R
 import com.isaev.dummyjson.ui.theme.DummyJsonTheme
 import com.isaev.dummyjson.ui.theme.MainViewModel
 import kotlinx.serialization.encodeToString
