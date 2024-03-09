@@ -1,4 +1,4 @@
-package com.isaev.dummyjson.ui.theme
+package com.isaev.dummyjson.ui
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

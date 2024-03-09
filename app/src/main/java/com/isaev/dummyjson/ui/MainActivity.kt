@@ -45,7 +45,6 @@ import com.isaev.dummyjson.DataState
 import com.isaev.dummyjson.Product
 import com.isaev.dummyjson.R
 import com.isaev.dummyjson.ui.theme.DummyJsonTheme
-import com.isaev.dummyjson.ui.theme.MainViewModel
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
