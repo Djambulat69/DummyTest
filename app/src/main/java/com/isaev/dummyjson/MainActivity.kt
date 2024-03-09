@@ -1,10 +1,12 @@
 package com.isaev.dummyjson
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -41,8 +43,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.isaev.dummyjson.ui.theme.DummyJsonTheme
 import com.isaev.dummyjson.ui.theme.MainViewModel
-
-private const val IMAGES_CHANGE_LAUNCH_KEY = 0
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class MainActivity : ComponentActivity() {
 
@@ -90,7 +92,7 @@ class MainActivity : ComponentActivity() {
                 state = gridState
             ) {
                 val productType = 0
-                items(products, contentType = { productType }) { product ->
+                items(products, contentType = { productType }, key = { it.id }) { product ->
                     ProductGridItem(product)
                 }
 
@@ -116,12 +118,17 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun ProductGridItem(product: Product) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp)
-                .height(360.dp)
-        ) {
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp)
+            .height(360.dp)
+            .clickable {
+                startActivity(Intent(this, ProductActivity::class.java).apply {
+                    putExtra(
+                        ProductActivity.PRODUCT_EXTRA_KEY, Json.encodeToString(product)
+                    )
+                })
+            }) {
             AsyncImage(
                 model = ImageRequest.Builder(this@MainActivity).data(product.thumbnail)
                     .crossfade(true).build(),
